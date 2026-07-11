@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Notas</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16232F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <div class="ticket">
+    <div>
+      <h1>Notas</h1>
+      <div class="sub">Listas, gastos rápidos y notas de texto</div>
+      <div style="margin-top:6px;"><span class="status-dot" id="statusDot"></span><span class="status-text" id="statusText">Conectando...</span></div>
+    </div>
+  </div>
+
+  <div id="content"><div class="loading">Cargando notas...</div></div>
+</div>
+
+<!-- Firebase SDK (compat, sin build step) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js").catch(console.error);
+  });
+}
+</script>
+</body>
+</html>
