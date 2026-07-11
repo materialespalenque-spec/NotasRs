@@ -87,7 +87,7 @@ function subscribeNotas(){
   unsubNotas = db.collection("notas_rapidas").where("usuario","==",usuarioActual).onSnapshot(snap=>{
     notasList = snap.docs.map(d=>({id:d.id, ...d.data()}))
       .sort((a,b)=> (b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0) - (a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0));
-    const notaFields = ["notaTitulo","notaGastoDesc","notaGastoMonto","notaGastoCantidad","notaGastoFecha","notaTextoInicial"];
+    const notaFields = ["notaTitulo","notaImportarTexto","notaGastoDesc","notaGastoMonto","notaGastoCantidad","notaGastoFecha","notaTextoInicial"];
     const activeEl = document.activeElement;
     const skip = activeEl && (
       notaFields.includes(activeEl.id) ||
@@ -110,6 +110,25 @@ function hashRot(id){
   return (Math.abs(h)%7)-3; // -3..3 grados
 }
 
+function parseLineasImportadas(texto){
+  return String(texto||"").split("\n")
+    .map(l=>l.trim())
+    .filter(l=>l.length)
+    // descarta líneas que sean el título/pie de una nota compartida desde esta misma app
+    .filter(l=> !/^—?\s*Notas\s*$/i.test(l) && !/^Total:/i.test(l) && !/^📋/.test(l) && !/^💰/.test(l))
+    .map(l=>{
+      const done = /^(✅|\[x\]|\[X\])/.test(l);
+      const text = l
+        .replace(/^(✅|⬜|☐|□|✔)\s*/,'')
+        .replace(/^\[[ xX]\]\s*/,'')
+        .replace(/^[-*•]\s*/,'')
+        .replace(/^\d+[\.\)]\s*/,'')
+        .trim();
+      return {text, done};
+    })
+    .filter(it=>it.text.length);
+}
+
 // ============================================================
 // Render: formulario para agregar nota
 // ============================================================
@@ -121,7 +140,8 @@ function renderAddNotaForm(){
 
   let fieldsHtml = "";
   if (notaTipoActivo === "checklist"){
-    fieldsHtml = `<div class="form-group"><label>Título de la lista</label><input type="text" id="notaTitulo" placeholder="Ej. Súper, Encargos..."></div>`;
+    fieldsHtml = `<div class="form-group"><label>Título de la lista</label><input type="text" id="notaTitulo" placeholder="Ej. Súper, Encargos..."></div>
+      <div class="form-group"><label>Pegar lista (opcional)</label><textarea id="notaImportarTexto" placeholder="Pega aquí una lista de WhatsApp u otro lado — cada línea será un pendiente" style="min-height:70px;"></textarea></div>`;
   } else if (notaTipoActivo === "gasto"){
     fieldsHtml = `<div class="form-group"><label>Nombre de la lista de gasto</label><input type="text" id="notaTitulo" placeholder="Ej. Gasolina camioneta, Viáticos evento..."></div>`;
   } else {
@@ -270,7 +290,13 @@ async function addNota(){
   if (notaTipoActivo === "checklist" || notaTipoActivo === "gasto"){
     const titulo = document.getElementById("notaTitulo").value.trim();
     if (!titulo){ alert("Ponle un nombre a la lista."); return; }
-    data.titulo = titulo; data.items = [];
+    data.titulo = titulo;
+    if (notaTipoActivo === "checklist"){
+      const importarEl = document.getElementById("notaImportarTexto");
+      data.items = importarEl && importarEl.value.trim() ? parseLineasImportadas(importarEl.value) : [];
+    } else {
+      data.items = [];
+    }
   } else {
     const contenido = document.getElementById("notaTextoInicial").value.trim();
     if (!contenido){ alert("Escribe algo antes de guardar."); return; }
