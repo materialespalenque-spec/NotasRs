@@ -13,6 +13,53 @@ const pad = n => String(n).padStart(2,"0");
 const dateKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
 // ============================================================
+// Usuario (separación simple por nombre/código, sin contraseña)
+// ============================================================
+let usuarioActual = localStorage.getItem("notasUsuario") || null;
+let unsubNotas = null;
+
+function renderUsuarioBox(){
+  const box = document.getElementById("usuarioBox");
+  if (!box) return;
+  box.innerHTML = usuarioActual
+    ? `Viendo notas de <span class="nombre">${escapeHtml(usuarioActual)}</span><span class="cambiar" id="cambiarUsuarioBtn">cambiar</span>`
+    : "";
+  const btn = document.getElementById("cambiarUsuarioBtn");
+  if (btn) btn.addEventListener("click", cerrarSesionUsuario);
+}
+
+function cerrarSesionUsuario(){
+  if (!confirm("¿Cambiar de usuario? No perderás tus notas, solo dejarás de verlas hasta que vuelvas a poner tu nombre/código.")) return;
+  localStorage.removeItem("notasUsuario");
+  usuarioActual = null;
+  if (unsubNotas) { unsubNotas(); unsubNotas = null; }
+  notasList = [];
+  renderUsuarioBox();
+  render();
+}
+
+function iniciarSesionUsuario(valor){
+  const nombre = (valor||"").trim();
+  if (!nombre){ alert("Escribe un nombre o código."); return; }
+  usuarioActual = nombre;
+  localStorage.setItem("notasUsuario", nombre);
+  renderUsuarioBox();
+  subscribeNotas();
+  render();
+}
+
+function renderLogin(){
+  return `
+    <div class="login-card">
+      <h2>¿Quién eres?</h2>
+      <p>Escribe tu nombre o un código corto. Así separamos tus notas de las de otros. No es una contraseña — cualquiera que escriba el mismo nombre verá las mismas notas.</p>
+      <input type="text" id="loginInput" placeholder="Ej. Roberto, Sucursal Periférico..." maxlength="40">
+      <button class="btn-primary" id="loginBtn">Entrar</button>
+    </div>
+  `;
+}
+
+// ============================================================
 // Conexión
 // ============================================================
 window.addEventListener("online", updateStatus);
@@ -31,19 +78,26 @@ function isTypingIn(ids){
 }
 
 // ============================================================
-// Firestore: suscripción en tiempo real a notas_rapidas
+// Firestore: suscripción en tiempo real a notas_rapidas, filtrada por usuario
+// (el orden se hace en el cliente para no requerir un índice compuesto en Firestore)
 // ============================================================
-db.collection("notas_rapidas").orderBy("createdAt","desc").onSnapshot(snap=>{
-  notasList = snap.docs.map(d=>({id:d.id, ...d.data()}));
-  const notaFields = ["notaTitulo","notaGastoDesc","notaGastoMonto","notaGastoCantidad","notaGastoFecha","notaTextoInicial"];
-  const activeEl = document.activeElement;
-  const skip = activeEl && (
-    notaFields.includes(activeEl.id) ||
-    (activeEl.classList && activeEl.classList.contains("sticky-texto")) ||
-    (activeEl.hasAttribute && (activeEl.hasAttribute("data-additem") || activeEl.hasAttribute("data-gm") || activeEl.hasAttribute("data-gc") || activeEl.hasAttribute("data-gd")))
-  );
-  if (!skip && !editingItem) render();
-}, err=>console.error("Error leyendo notas:", err));
+function subscribeNotas(){
+  if (unsubNotas) unsubNotas();
+  if (!usuarioActual) return;
+  unsubNotas = db.collection("notas_rapidas").where("usuario","==",usuarioActual).onSnapshot(snap=>{
+    notasList = snap.docs.map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b)=> (b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0) - (a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0));
+    const notaFields = ["notaTitulo","notaGastoDesc","notaGastoMonto","notaGastoCantidad","notaGastoFecha","notaTextoInicial"];
+    const activeEl = document.activeElement;
+    const skip = activeEl && (
+      notaFields.includes(activeEl.id) ||
+      (activeEl.classList && activeEl.classList.contains("sticky-texto")) ||
+      (activeEl.hasAttribute && (activeEl.hasAttribute("data-additem") || activeEl.hasAttribute("data-gm") || activeEl.hasAttribute("data-gc") || activeEl.hasAttribute("data-gd")))
+    );
+    if (!skip && !editingItem) render();
+  }, err=>console.error("Error leyendo notas:", err));
+}
+if (usuarioActual) subscribeNotas();
 
 // ============================================================
 // Helpers
@@ -211,7 +265,7 @@ function renderNotas(){
 // ============================================================
 async function addNota(){
   const btn = document.getElementById("btnAddNota");
-  const data = { tipo: notaTipoActivo, color: notaColorSeleccionado, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+  const data = { tipo: notaTipoActivo, color: notaColorSeleccionado, usuario: usuarioActual, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
   if (notaTipoActivo === "checklist" || notaTipoActivo === "gasto"){
     const titulo = document.getElementById("notaTitulo").value.trim();
     if (!titulo){ alert("Ponle un nombre a la lista."); return; }
@@ -312,6 +366,20 @@ function saveTextoNotaDebounced(notaId, value){
 // ============================================================
 function render(){
   const content = document.getElementById("content");
+  renderUsuarioBox();
+
+  if (!usuarioActual){
+    content.innerHTML = renderLogin();
+    document.getElementById("loginBtn").addEventListener("click", ()=>{
+      iniciarSesionUsuario(document.getElementById("loginInput").value);
+    });
+    document.getElementById("loginInput").addEventListener("keydown", (e)=>{
+      if (e.key === "Enter") iniciarSesionUsuario(e.target.value);
+    });
+    document.getElementById("loginInput").focus();
+    return;
+  }
+
   content.innerHTML = renderNotas();
 
   content.querySelectorAll("[data-notatipo]").forEach(el=>{
