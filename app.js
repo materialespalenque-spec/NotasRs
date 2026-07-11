@@ -228,7 +228,7 @@ function buildShareText(nota){
     let text = `💰 ${nota.titulo||"Gastos"}\nTotal: ${fmt(total)}\n\n`;
     (nota.items||[]).forEach((it,idx)=>{
       const showQty = it.cantidad && Number(it.cantidad) !== 1;
-      text += `${idx+1}. ${fmt(lineTotal(it))}${showQty?` (${fmt(it.monto)} × ${it.cantidad})`:""} — ${it.descripcion||""}${it.fecha?`\n   📅 ${it.fecha}`:""}\n\n`;
+      text += `${idx+1}. ${fmt(lineTotal(it))}${showQty?` (${fmt(it.monto)} × ${it.cantidad})`:""} — ${it.descripcion||""}${it.fecha?`\n   ${it.fecha}`:""}\n\n`;
     });
     text += `— Notas`;
     return text;
