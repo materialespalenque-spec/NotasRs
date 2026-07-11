@@ -7,6 +7,7 @@ let notasList = [];
 let notaTipoActivo = "checklist";
 let notaColorSeleccionado = "#F2E14C";
 let editingItem = null; // {notaId, idx, tipo:"checklist"|"gasto"}
+let mostrarImportarChecklist = false;
 const NOTE_COLORS = ["#F2E14C", "#F7B6C2", "#B8E8C8", "#AEDBF2", "#F7C59F"];
 
 const pad = n => String(n).padStart(2,"0");
@@ -141,7 +142,8 @@ function renderAddNotaForm(){
   let fieldsHtml = "";
   if (notaTipoActivo === "checklist"){
     fieldsHtml = `<div class="form-group"><label>Título de la lista</label><input type="text" id="notaTitulo" placeholder="Ej. Súper, Encargos..."></div>
-      <div class="form-group"><label>Pegar lista (opcional)</label><textarea id="notaImportarTexto" placeholder="Pega aquí una lista de WhatsApp u otro lado — cada línea será un pendiente" style="min-height:70px;"></textarea></div>`;
+      <div class="import-toggle" id="toggleImportarBtn">${mostrarImportarChecklist ? "− Ocultar pegar lista" : "+ Pegar lista desde WhatsApp"}</div>
+      ${mostrarImportarChecklist ? `<div class="form-group"><textarea id="notaImportarTexto" placeholder="Pega aquí una lista de WhatsApp u otro lado — cada línea será un pendiente" style="min-height:70px;"></textarea></div>` : ""}`;
   } else if (notaTipoActivo === "gasto"){
     fieldsHtml = `<div class="form-group"><label>Nombre de la lista de gasto</label><input type="text" id="notaTitulo" placeholder="Ej. Gasolina camioneta, Viáticos evento..."></div>`;
   } else {
@@ -412,6 +414,13 @@ function render(){
   content.querySelectorAll("[data-notatipo]").forEach(el=>{
     el.addEventListener("click", ()=>{ notaTipoActivo = el.dataset.notatipo; render(); });
   });
+  const toggleImportarBtn = document.getElementById("toggleImportarBtn");
+  if (toggleImportarBtn){
+    toggleImportarBtn.addEventListener("click", ()=>{
+      mostrarImportarChecklist = !mostrarImportarChecklist;
+      render();
+    });
+  }
   content.querySelectorAll("[data-notacolor]").forEach(el=>{
     el.addEventListener("click", ()=>{
       notaColorSeleccionado = el.dataset.notacolor;
