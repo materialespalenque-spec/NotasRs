@@ -44,6 +44,27 @@ html,body{margin:0;padding:0;background:var(--navy);color:var(--off);font-family
 
 .loading{text-align:center;color:var(--muted);padding:30px;font-size:13px;}
 
+/* --- Login simple (nombre/código) --- */
+.usuario-box{font-size:11px;color:var(--muted);text-align:right;}
+.usuario-box .nombre{color:var(--yellow);font-weight:600;}
+.usuario-box .cambiar{cursor:pointer;text-decoration:underline;margin-left:6px;}
+.usuario-box .cambiar:hover{color:var(--off);}
+
+.login-card{
+  background:var(--card);border:1px solid var(--grid);border-radius:10px;
+  padding:24px 20px;max-width:340px;margin:40px auto;text-align:center;
+}
+.login-card h2{
+  font-family:'Oswald',sans-serif;font-size:16px;text-transform:uppercase;letter-spacing:0.5px;
+  margin:0 0 6px;color:var(--off);
+}
+.login-card p{font-size:12.5px;color:var(--muted);margin:0 0 16px;}
+.login-card input{
+  width:100%;background:var(--navy-2);border:1px solid var(--grid);border-radius:6px;color:var(--off);
+  font-family:'Inter',sans-serif;font-size:14px;padding:10px;margin-bottom:12px;text-align:center;
+}
+.login-card input:focus{outline:none;border-color:var(--cyan);}
+
 /* --- Formulario / botón --- */
 .expense-form{background:var(--card);border:1px solid var(--grid);border-radius:8px;padding:14px;margin-bottom:18px;}
 .form-group{margin-bottom:8px;}
