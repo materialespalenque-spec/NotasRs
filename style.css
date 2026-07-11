@@ -82,6 +82,12 @@ html,body{margin:0;padding:0;background:var(--navy);color:var(--off);font-family
 .btn-primary:hover{background:#ffc72e;}
 .btn-primary:disabled{background:var(--grid);color:var(--muted);cursor:not-allowed;}
 
+.import-toggle{
+  font-size:11.5px;color:var(--cyan);cursor:pointer;display:inline-block;
+  margin:2px 0 8px;text-decoration:underline;
+}
+.import-toggle:hover{color:var(--off);}
+
 /* --- Notas rápidas (post-its) --- */
 .note-type-tabs{display:flex;gap:6px;margin-bottom:10px;}
 .note-type-tab{
