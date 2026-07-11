@@ -181,6 +181,7 @@ function stickyCardHtml(nota){
             <input type="number" class="edit-input" placeholder="Cant." value="${it.cantidad||''}" data-editgc="${nota.id}:${idx}" step="1">
           </div>
           <input type="text" class="edit-input" placeholder="Descripción" value="${escapeHtml(it.descripcion||'')}" data-editgd="${nota.id}:${idx}">
+          <input type="date" class="edit-input" value="${it.fecha||''}" data-editgf="${nota.id}:${idx}">
           <div style="display:flex;gap:6px;">
             <div class="item-save" data-saveeditgasto="${nota.id}:${idx}">✓ Guardar</div>
             <div class="item-cancel" data-canceledit="1">✕</div>
@@ -336,11 +337,11 @@ function saveChecklistItemEdit(notaId, idx, newText){
     .catch(e=>console.error("Error editando item:", e));
 }
 
-function saveGastoItemEdit(notaId, idx, {monto, cantidad, descripcion}){
+function saveGastoItemEdit(notaId, idx, {monto, cantidad, descripcion, fecha}){
   const nota = notasList.find(n=>n.id===notaId);
   if (!nota) return;
   if (!monto || monto <= 0){ alert("Ingresa un monto válido."); return; }
-  nota.items = (nota.items||[]).map((it,i)=> i===idx ? {...it, monto:Number(monto), cantidad:cantidad||"", descripcion:descripcion||""} : it);
+  nota.items = (nota.items||[]).map((it,i)=> i===idx ? {...it, monto:Number(monto), cantidad:cantidad||"", descripcion:descripcion||"", fecha:fecha||it.fecha} : it);
   editingItem = null;
   render();
   db.collection("notas_rapidas").doc(notaId).update({items: nota.items})
@@ -467,7 +468,8 @@ function render(){
       const m = content.querySelector(`[data-editgm="${notaId}:${idx}"]`);
       const c = content.querySelector(`[data-editgc="${notaId}:${idx}"]`);
       const d = content.querySelector(`[data-editgd="${notaId}:${idx}"]`);
-      saveGastoItemEdit(notaId, parseInt(idx,10), {monto:parseFloat(m.value), cantidad:c.value, descripcion:d.value});
+      const f = content.querySelector(`[data-editgf="${notaId}:${idx}"]`);
+      saveGastoItemEdit(notaId, parseInt(idx,10), {monto:parseFloat(m.value), cantidad:c.value, descripcion:d.value, fecha:f.value});
     });
   });
   content.querySelectorAll("[data-canceledit]").forEach(el=>{
